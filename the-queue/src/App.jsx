@@ -45,6 +45,20 @@ function App() {
     }
   }
 
+  // remove a task from highTasks by id
+  const removeHighTask = (id) => {
+    setHighTasks(prev => prev.filter(t => t.id !== id));
+  }
+
+  // remove a task from a regularTasks card by id and card index
+  const removeRegularTask = (cardIndex, id) => {
+    setRegularTasks(prev => {
+      const copy = prev.map(arr => [...arr]);
+      copy[cardIndex] = copy[cardIndex].filter(t => t.id !== id);
+      return copy;
+    });
+  }
+
   return (
     <>
       <div className='container'>
@@ -59,10 +73,10 @@ function App() {
           <button onClick={admitTask}>Admit Task</button>
         </div>
         <div>
-          <HighPriorityQueueCard title={`HighPriorityQueueCard 1`} tasks={highTasks} />
-          <RegularQueueCard title={`RegularQueueCard 1`} tasks={regularTasks[0]} />
-          <RegularQueueCard title={`RegularQueueCard 2`} tasks={regularTasks[1]} />
-          <RegularQueueCard title={`RegularQueueCard 3`} tasks={regularTasks[2]} />
+          <HighPriorityQueueCard title={`HighPriorityQueueCard 1`} tasks={highTasks} onRemoveHigh={removeHighTask} />
+          <RegularQueueCard title={`RegularQueueCard 1`} tasks={regularTasks[0]} onRemoveRegular={removeRegularTask} cardIndex={0} />
+          <RegularQueueCard title={`RegularQueueCard 2`} tasks={regularTasks[1]} onRemoveRegular={removeRegularTask} cardIndex={1} />
+          <RegularQueueCard title={`RegularQueueCard 3`} tasks={regularTasks[2]} onRemoveRegular={removeRegularTask} cardIndex={2} />
         </div>
       </div>
     </>
