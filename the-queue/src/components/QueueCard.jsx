@@ -16,7 +16,7 @@ const QueueCard = ({ title, tasks = [], onRemoveHigh, onRemoveRegular, cardIndex
     // We'll treat the task.value as seconds to make the timeout reasonable.
     const activeTask = tasks.length > 0 ? tasks[0] : null
     // use task.value directly as milliseconds; enforce a small minimum so animations are visible
-    const activeDurationMs = activeTask ? Math.max(50, Number(activeTask.value) || 0) : 0
+    const activeDurationMs = activeTask ? Math.max(1000, Number(activeTask.value) || 0) : 0
 
     useEffect(() => {
         // clear any previous timers/frames

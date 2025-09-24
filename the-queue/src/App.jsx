@@ -15,9 +15,9 @@ function App() {
   // pointer for admitting to regular cards: start at last index so first admission goes to last card
   const [regularNextIndex, setRegularNextIndex] = useState(2);
 
-  // Add a random task. 1-in-10 chance to be high-priority, but always enqueue at the tail (FIFO).
+  // Add a random task. 1-in-20 chance to be high-priority, but always enqueue at the tail (FIFO).
   const addRandomTask = () => {
-    const isHigh = Math.random() < 0.1; // 10% chance
+    const isHigh = Math.random() < 0.2; // 20% chance
     const task = { id: Date.now() + Math.random(), value: Math.floor(Math.random() * 200), high: isHigh };
     setQueueList(prev => [...prev, task]);
   }
@@ -66,7 +66,7 @@ function App() {
           <button onClick={addRandomTask}>Add Random Task</button>
           <h1>Task Queue</h1>
           <div className='time-list'>
-            {queueList.map((task, index) => (
+            {queueList.map((task) => (
               <Task key={task.id} taskNumber={task.value} high={task.high} />
             ))}
           </div>
