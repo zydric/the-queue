@@ -105,3 +105,44 @@ h1 {
   height: 40px;
   align-items: start;
 }
+
+/* Task */
+.task {
+    border: 1px solid black;
+    padding: 0.1em;
+    width: 25px;
+    text-align: center;
+    font-size: 0.8rem;
+}
+
+.task.high {
+    border-color: red;
+    color: red;
+    font-weight: 600;
+}
+
+/* Queue Card */
+.queue-card {
+    border: 1px solid black;
+    margin-bottom: 0.3em;
+    padding: 0.4em;
+}
+
+.queue-card h2 {
+    font-size: 1.2rem;
+}
+
+.queue-card > div {
+    display: flex;
+    gap: 0.3em;
+    flex-wrap: wrap;
+    text-align: center;
+    height: 50px;
+    align-items: start;
+}
+
+.queue-card .duration {
+    border: 1px solid red;
+    width: fit-content;
+    height: 20px;
+}

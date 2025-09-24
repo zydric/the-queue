@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react'
-import '../css/queueCard.css'
 import Task from './Task'
 
 // QueueCard now accepts optional removal handlers.
