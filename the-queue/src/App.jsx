@@ -5,19 +5,18 @@ import RegularQueueCard from './components/RegularQueueCard'
 import Task from './components/Task'
 
 function App() {
-  // keep tasks in React state so rendering is managed by React
-  // store tasks as objects so we can mark high-priority
-  const [queueList, setQueueList] = useState([]);
-  // tasks assigned to cards
-  const [highTasks, setHighTasks] = useState([]);
-  // array of 3 regular card queues
-  const [regularTasks, setRegularTasks] = useState([[], [], []]);
-  // pointer for admitting to regular cards: start at last index so first admission goes to last card
-  const [regularNextIndex, setRegularNextIndex] = useState(2);
+  // queueList: main waiting line (FIFO). We push new tasks here.
+  // highTasks: tasks that go to the high-priority card.
+  // regularTasks: an array of three arrays, one for each regular card.
+  // regularNextIndex: which regular card will receive the next admitted task.
+  const [queueList, setQueueList] = useState([])
+  const [highTasks, setHighTasks] = useState([])
+  const [regularTasks, setRegularTasks] = useState([[], [], []])
+  const [regularNextIndex, setRegularNextIndex] = useState(2)
 
-  // Add a random task. 1-in-10 chance to be high-priority, but always enqueue at the tail (FIFO).
+  // Create and enqueue a random task. 
   const addRandomTask = () => {
-    const isHigh = Math.random() < 0.1; // 10% chance
+    const isHigh = Math.random() < 0.1; 
     const task = { id: Date.now() + Math.random(), value: Math.floor(Math.random() * 200), high: isHigh };
     setQueueList(prev => [...prev, task]);
   }
@@ -27,30 +26,52 @@ function App() {
 
     const [first, ...rest] = queueList;
 
-    // remove from queueList first (FIFO)
+  // remove from the head of the queue (FIFO)
     setQueueList(rest);
 
     if (first.high) {
-      // assign to high priority card
-      setHighTasks(high => [...high, first]);
+      // send high-priority tasks to the dedicated highTasks list
+      setHighTasks((high) => [...high, first])
     } else {
-      // assign to regular card at regularNextIndex
-      setRegularTasks(regular => {
-        const copy = regular.map(arr => [...arr]);
-        copy[regularNextIndex].push(first);
-        return copy;
-      });
-      // move pointer to previous card (wrap around)
-      setRegularNextIndex(i => (i - 1 + 3) % 3);
+      // Decide where to put the regular task:
+      // - If at least one regular card is still empty, keep original round-robin
+      //   admission (so initial filling goes card3 -> card2 -> card1).
+      // - If every regular card already has at least one task, pick the card
+      //   whose total queued duration (sum of task.value) is smallest. This
+      //   helps balance finishing times across cards.
+      const allHaveTask = regularTasks.every((arr) => arr.length > 0)
+
+      setRegularTasks((regular) => {
+        const copy = regular.map((arr) => [...arr])
+
+        let targetIndex
+        if (allHaveTask) {
+          // compute sum of values for each card and pick the smallest
+          const sums = copy.map((arr) => arr.reduce((s, t) => s + Number(t.value || 0), 0))
+          const minSum = Math.min(...sums)
+          targetIndex = sums.indexOf(minSum)
+        } else {
+          // still filling initial slots: use round-robin pointer
+          targetIndex = regularNextIndex
+        }
+
+        copy[targetIndex].push(first)
+        return copy
+      })
+
+      // Update the pointer only while we're in the initial filling phase.
+      if (!allHaveTask) {
+        setRegularNextIndex((i) => (i - 1 + 3) % 3)
+      }
     }
   }
 
-  // remove a task from highTasks by id
+  // remove a task from the high-priority card by id
   const removeHighTask = (id) => {
     setHighTasks(prev => prev.filter(t => t.id !== id));
   }
 
-  // remove a task from a regularTasks card by id and card index
+  // remove a task from a regular card by card index + id
   const removeRegularTask = (cardIndex, id) => {
     setRegularTasks(prev => {
       const copy = prev.map(arr => [...arr]);

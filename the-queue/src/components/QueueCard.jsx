@@ -1,9 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react'
 import Task from './Task'
 
-// QueueCard now accepts optional removal handlers.
-// For high priority cards, pass `onRemoveHigh(id)`.
-// For regular cards, pass `onRemoveRegular(cardIndex, id)` and `cardIndex`.
+// Reusable card: shows tasks and a progress bar for the front task.
+// When the progress finishes, this component asks the parent to remove the task.
 const QueueCard = ({ title, tasks = [], onRemoveHigh, onRemoveRegular, cardIndex }) => {
     const durationRef = useRef(null)
     const rafRef = useRef(null)
@@ -11,14 +10,16 @@ const QueueCard = ({ title, tasks = [], onRemoveHigh, onRemoveRegular, cardIndex
     const startTimeRef = useRef(null)
     const [widthPercent, setWidthPercent] = useState(100)
 
-    // derive duration for the active task: use first task's value as seconds (or ms?)
-    // We'll treat the task.value as seconds to make the timeout reasonable.
+    // The active task is the first one (FIFO). Convert its value into ms so
+    // the UI animation has a real duration to show.
     const activeTask = tasks.length > 0 ? tasks[0] : null
-    // Use seconds but cap at 10 seconds max
-    const activeDurationMs = activeTask ? Math.max(1000, (Number(activeTask.value) / 200) * 10000) : 0
+    const activeDurationMs = activeTask ? Math.max(300, (Number(activeTask.value) / 200) * 10000) : 0
+
+    const activeTaskId = activeTask ? activeTask.id : null
+    const activeTaskValue = activeTask ? activeTask.value : null
 
     useEffect(() => {
-        // clear any previous timers/frames
+        // Clear previous timers/frames so we start fresh for the current active task.
         if (timeoutRef.current) {
             clearTimeout(timeoutRef.current)
             timeoutRef.current = null
@@ -28,33 +29,27 @@ const QueueCard = ({ title, tasks = [], onRemoveHigh, onRemoveRegular, cardIndex
             rafRef.current = null
         }
 
-        // start with the bar full (100%) and animate down to 0
-        // if there's no active task, we want the bar to have no inline width (handled below)
-        if (!activeTask) return
+        if (!activeTask) return // nothing to animate or remove
 
+        // Start the progress bar and animate from 100% -> 0% over activeDurationMs.
         setWidthPercent(100)
         startTimeRef.current = performance.now()
 
-        // animate width from 100 -> 0 over activeDurationMs
         const animate = (now) => {
             const elapsed = now - startTimeRef.current
             const pct = Math.max(0, 100 - (elapsed / activeDurationMs) * 100)
             setWidthPercent(pct)
-            if (pct > 0) {
-                rafRef.current = requestAnimationFrame(animate)
-            }
+            if (pct > 0) rafRef.current = requestAnimationFrame(animate)
         }
 
         rafRef.current = requestAnimationFrame(animate)
 
-        // set a timeout to remove the task when duration elapses
+        // When time is up, call the parent handler to remove the active task.
         timeoutRef.current = setTimeout(() => {
-            // remove the active task using the provided handlers
             if (activeTask) {
                 if (activeTask.high && typeof onRemoveHigh === 'function') {
                     onRemoveHigh(activeTask.id)
                 } else if (!activeTask.high && typeof onRemoveRegular === 'function') {
-                    // cardIndex might be undefined for high-priority card; ensure it's passed for regular
                     onRemoveRegular(cardIndex ?? 0, activeTask.id)
                 }
             }
@@ -70,10 +65,9 @@ const QueueCard = ({ title, tasks = [], onRemoveHigh, onRemoveRegular, cardIndex
                 rafRef.current = null
             }
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeTask?.id, activeTask?.value])
+    }, [activeTaskId, activeTaskValue])
 
-    // inline style should only affect width; only set it when there's an active task
+    // Only set an inline width while there's an active task; otherwise use stylesheet.
     const durationStyle = activeTask ? { width: `${widthPercent}%` } : {}
 
     return (
@@ -81,7 +75,7 @@ const QueueCard = ({ title, tasks = [], onRemoveHigh, onRemoveRegular, cardIndex
             <h2>{title}</h2>
             <p>Queue List</p>
             <div>
-                {tasks.map(t => (
+                {tasks.map((t) => (
                     <Task key={t.id} taskNumber={t.value} high={t.high} />
                 ))}
             </div>
